@@ -1,4 +1,4 @@
-package com.emsauthservice.Entity;
+package com.emsuserservice.Entity;
 
 public enum Role {
     ADMIN,
