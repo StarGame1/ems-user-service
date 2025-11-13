@@ -1,17 +1,27 @@
 package com.emsuserservice.Service;
 
+import com.emsuserservice.Dto.CreateUserRequest;
+import com.emsuserservice.Entity.Role;
 import com.emsuserservice.Entity.User;
 import com.emsuserservice.Repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;         // <-- import corect
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
 
-    public UserService(UserRepository userRepository) {
+    @Value("${device.service.url}")
+    private String deviceServiceUrl;
+
+    public UserService(UserRepository userRepository, RestTemplate restTemplate) {
         this.userRepository = userRepository;
+        this.restTemplate = restTemplate;
     }
 
     //Create
@@ -57,5 +67,27 @@ public class UserService {
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
+
+    public void createFromAuth(CreateUserRequest dto) {
+        User user = userRepository.findByUsername(dto.username())
+                .orElse(null);
+
+        if (user == null) {
+            user = new User();
+
+        }
+
+        user.setUsername(dto.username());
+        user.setRole(Role.valueOf(dto.role()));
+
+        userRepository.save(user);
+
+        try {
+            restTemplate.postForLocation(deviceServiceUrl, dto);
+        } catch (Exception e) {
+            System.out.println("Could not sync user to device-service: " + e.getMessage());
+        }
+    }
+
 
 }
