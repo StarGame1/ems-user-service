@@ -1,5 +1,6 @@
 package com.emsuserservice.Controller;
 
+import com.emsuserservice.Dto.AdminCreateUserRequest;
 import com.emsuserservice.Entity.User;
 import com.emsuserservice.Service.UserService;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,17 @@ public class UserController {
         return userService.findAll();
     }
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-            if(userService.existsByUsername(user.getUsername())){
-                return ResponseEntity.status(HttpStatus.CONFLICT).build();
-            }
-            User saved = userService.save(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<User> createUser(@RequestBody AdminCreateUserRequest dto) {
+
+        if (userService.existsByUsername(dto.username())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
+        User saved = userService.saveFromAdmin(dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         try {

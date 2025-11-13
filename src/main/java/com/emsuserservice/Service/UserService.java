@@ -1,5 +1,6 @@
 package com.emsuserservice.Service;
 
+import com.emsuserservice.Dto.AdminCreateUserRequest;
 import com.emsuserservice.Dto.CreateUserRequest;
 import com.emsuserservice.Entity.Role;
 import com.emsuserservice.Entity.User;
@@ -15,6 +16,8 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
+    @Value("${auth.service.url}")
+    private String authServiceUrl;
 
     @Value("${device.service.url}")
     private String deviceServiceUrl;
@@ -23,6 +26,28 @@ public class UserService {
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
     }
+
+    public User saveFromAdmin(AdminCreateUserRequest dto) {
+
+        User user = new User();
+        user.setUsername(dto.username());
+        user.setRole(Role.valueOf(dto.role()));
+
+        User saved = userRepository.save(user);
+
+        syncToAuth(dto);
+
+        return saved;
+    }
+    public void syncToAuth(AdminCreateUserRequest dto) {
+        try {
+            restTemplate.postForLocation(authServiceUrl, dto);
+        } catch (Exception e) {
+            System.out.println("Could not sync user to auth-service: " + e.getMessage());
+        }
+    }
+
+
 
     //Create
     public User save(User user) {
